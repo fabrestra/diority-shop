@@ -9,3 +9,7 @@ dist/
 .vercel
 .turbo
 *.tsbuildinfo
+
+# Служебные данные — не должны попадать в публичный репозиторий
+src/data/sources.ts
+src/data/margins.ts

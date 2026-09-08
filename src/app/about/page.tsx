@@ -74,7 +74,9 @@ export default function AboutPage() {
         <ul className="space-y-2.5 text-[var(--color-text-muted)]">
           <li>
             <strong className="text-white">Цена на сайте = цена при оплате.</strong>{" "}
-            Дополнительные комиссии при оформлении не начисляются.
+            Комиссия сервиса уже заложена в стоимость и показана до заказа —
+            на пополнении Steam это около 4,5% к номиналу. При оформлении
+            к названной сумме ничего не добавляется.
           </li>
           <li>
             <strong className="text-white">Гарантия зависит от типа товара.</strong>{" "}

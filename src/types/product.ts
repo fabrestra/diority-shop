@@ -22,13 +22,26 @@ export type ProductInput = {
   note: string;
 };
 
-/** Позиция с посчитанными рублёвыми ценами. */
-export type Product = ProductInput & {
+/**
+ * Позиция для витрины. Себестоимости и наценки здесь НЕТ намеренно:
+ * каталог импортируется клиентскими компонентами, а значит всё, что
+ * лежит в этом типе, уезжает в JS-бандл и читается через F12.
+ * Конкуренту не нужно знать, почём мы закупаем.
+ */
+export type Product = Omit<ProductInput, "markup"> & {
   id: number;
-  /** Себестоимость в рублях: priceUsd × USD_COST_RATE */
-  costRub: number;
   /** Розница в рублях: себестоимость + наценка, округлённая до магазинного вида */
   priceRub: number;
+};
+
+/**
+ * Позиция с внутренними цифрами — для учёта и журнала закупок.
+ * Живёт в margins.ts, который не импортирует ни один компонент.
+ */
+export type ProductInternal = Product & {
+  markup?: number;
+  /** Себестоимость в рублях: priceUsd × USD_COST_RATE */
+  costRub: number;
   /** priceRub − costRub */
   marginRub: number;
 };

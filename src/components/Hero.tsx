@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { config, formatRub } from "@/lib/config";
 import { Send, ArrowRight } from "lucide-react";
-import { getActiveProducts, categories } from "@/data/catalog";
+import {
+  getActiveProducts,
+  categories,
+  getTopup,
+  topupPrice,
+  topupFeeRange,
+} from "@/data/catalog";
 import { TopupCalculator } from "./TopupCalculator";
 
 /**
@@ -15,6 +21,18 @@ import { TopupCalculator } from "./TopupCalculator";
 export function Hero() {
   const active = getActiveProducts();
   const cheapest = Math.min(...active.map((p) => p.priceRub));
+
+  /**
+   * Цифру про Steam НЕ пишем руками.
+   *
+   * Раньше в заголовке стояло «комиссия 3%», а калькулятор рядом показывал
+   * «без переплаты» — читатель видел два разных числа в одном экране.
+   * Теперь пример считается тем же кодом, что и калькулятор: разойтись
+   * они физически не могут.
+   */
+  const steam = getTopup("steam");
+  const demo = steam ? topupPrice(steam, 1000) : null;
+  const range = steam ? topupFeeRange(steam) : null;
 
   return (
     <section className="relative overflow-hidden border-b border-[var(--color-border)]">
@@ -37,13 +55,29 @@ export function Hero() {
             <h1 className="text-[2.4rem] font-semibold leading-[1.05] md:text-[3.4rem]">
               Пополнение и подписки
               <br />
-              <span className="text-[var(--color-mint)]">без переплат</span>
+              <span className="text-[var(--color-mint)]">без скрытых доплат</span>
             </h1>
 
             <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--color-text-muted)]">
-              Steam, Telegram, Roblox, ChatGPT, Apple и ещё полторы сотни позиций.
-              Комиссия на пополнение Steam — <strong className="text-white">3%</strong>,
-              это заметно ниже рынка.
+              Steam, Telegram, Roblox, ChatGPT, Apple — {active.length} позиций в
+              каталоге.
+              {demo && (
+                <>
+                  {" "}
+                  Комиссия на пополнение Steam —{" "}
+                  <strong className="text-white">
+                    {range
+                      ? `${range.min.toFixed(1).replace(".", ",")}–${range.max
+                          .toFixed(1)
+                          .replace(".", ",")}%`
+                      : `${demo.feePct.toFixed(1)}%`}
+                  </strong>{" "}
+                  к номиналу: {demo.qty.toLocaleString("ru-RU")} ₽ на кошелёк —{" "}
+                  {demo.priceRub.toLocaleString("ru-RU")} ₽ к оплате. Точная сумма
+                  видна в калькуляторе до заказа, при оформлении ничего не
+                  добавляется.
+                </>
+              )}
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">

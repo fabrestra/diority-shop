@@ -28,16 +28,19 @@ export function TopupCalculator({ compact = false }: { compact?: boolean }) {
   const low = qty > 0 && qty < svc.min;
   const high = qty > svc.max;
   const ok = qty >= svc.min && qty <= svc.max;
-  const { priceRub } = topupPrice(svc, qty);
+  const { priceRub, feeRub, feePct } = topupPrice(svc, qty);
 
   /**
-   * Для Steam единица — рубль на кошельке, поэтому «переплата» считается
+   * Для Steam единица — рубль на кошельке, поэтому комиссия считается
    * от номинала: сколько сверху к той сумме, что клиент получит.
-   * Для звёзд и робуксов такого сравнения нет — там показываем цену за штуку.
+   * Показываем её честно и заранее — человек видит размер до оформления,
+   * а не узнаёт о доплате в переписке. Скрытая комиссия убивает доверие
+   * дороже, чем сама комиссия.
+   * Для звёзд и робуксов такого сравнения нет — там цена за штуку.
    */
+  // Переплату не пересчитываем — берём ту же, что вернул topupPrice.
+  // Один источник числа = невозможно разойтись с текстом на главной.
   const inRubles = svc.unit.includes("₽");
-  const overpay = inRubles ? priceRub - qty : 0;
-  const overpayPct = inRubles && qty ? (overpay / qty) * 100 : 0;
   const perUnit = qty ? priceRub / qty : 0;
 
   const pick = (k: string) => {
@@ -145,11 +148,14 @@ export function TopupCalculator({ compact = false }: { compact?: boolean }) {
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-400">
             К оплате
+            {/* Ветки «без комиссии» здесь нет намеренно: topupPrice
+                округляет вверх, поэтому заявленный процент выдерживается
+                на любой сумме. Показывать «без комиссии» рядом с обещанием
+                комиссии на главной — ровно то расхождение, из-за которого
+                перестают верить остальным цифрам. */}
             {ok && inRubles && (
               <span className="ml-2 rounded bg-mint/15 px-1.5 py-0.5 text-[10px] font-bold text-mint">
-                {overpay <= 0
-                  ? "без переплаты"
-                  : `переплата ${overpayPct.toFixed(1)}%`}
+                комиссия {feePct.toFixed(1)}%
               </span>
             )}
           </div>
@@ -158,9 +164,16 @@ export function TopupCalculator({ compact = false }: { compact?: boolean }) {
           </div>
           {ok && (
             <div className="mt-1 text-xs text-slate-400">
-              {inRubles
-                ? `на баланс придёт ${qty.toLocaleString("ru-RU")} ₽`
-                : `${perUnit.toFixed(2)} ₽ за штуку`}
+              {inRubles ? (
+                <>
+                  на баланс придёт {qty.toLocaleString("ru-RU")} ₽
+                  {feeRub > 0 && (
+                    <> · комиссия {feeRub.toLocaleString("ru-RU")} ₽</>
+                  )}
+                </>
+              ) : (
+                `${perUnit.toFixed(2)} ₽ за штуку`
+              )}
             </div>
           )}
         </div>

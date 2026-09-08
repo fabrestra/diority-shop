@@ -7,7 +7,7 @@ import type { Product, ProductInput, Category, Warranty, Requirement } from "@/t
  */
 
 /** Сколько рублей реально стоит добыть $1 (закупка, со всеми комиссиями). */
-export const USD_COST_RATE = 86;
+export const USD_COST_RATE = 87;
 
 /**
  * Наценка по ступеням себестоимости.
@@ -335,10 +335,10 @@ const catalog: ProductInput[] = [
   { art: "NFX-K4", slug: "netflix-premium-4k-mesyats", category: "Netflix", categorySlug: "netflix", platform: "", name: "Premium 4K — месяц", priceUsd: 26.99, status: "Активна", note: "До 6 стримов, 4K" },
   { art: "NFX-EXTRAMEMBE", slug: "netflix-extra-member-s-reklamoy", category: "Netflix", categorySlug: "netflix", platform: "", name: "Extra Member (с рекламой)", priceUsd: 6.99, status: "Активна", note: "Дополнительный член" },
   { art: "NFX-EXTRAMEMBE2", slug: "netflix-extra-member-bez-reklamy", category: "Netflix", categorySlug: "netflix", platform: "", name: "Extra Member (без рекламы)", priceUsd: 9.99, status: "Активна", note: "" },
-  { art: "SPT-INDIV", slug: "spotify-premium-individual-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Individual — месяц", priceUsd: 12.99, status: "Активна", note: "Музыка без рекламы, офлайн-режим" },
-  { art: "SPT-DUO", slug: "spotify-premium-duo-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Duo — месяц", priceUsd: 18.99, status: "Активна", note: "На двоих" },
-  { art: "SPT-FAMIL", slug: "spotify-premium-family-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Family — месяц", priceUsd: 21.99, status: "Активна", note: "До 6 аккаунтов" },
-  { art: "SPT-STUDE", slug: "spotify-premium-student-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Student — месяц", priceUsd: 6.99, status: "Активна", note: "Нужна верификация" },
+  { art: "SPT-INDIV", slug: "spotify-premium-individual-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Individual — месяц", priceUsd: 2.09, status: "Активна", note: "Музыка без рекламы, офлайн-режим" },
+  { art: "SPT-DUO", slug: "spotify-premium-duo-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Duo — месяц", priceUsd: 2.79, status: "Активна", note: "На двоих" },
+  { art: "SPT-FAMIL", slug: "spotify-premium-family-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Family — месяц", priceUsd: 3.49, status: "Активна", note: "До 6 аккаунтов" },
+  { art: "SPT-STUDE", slug: "spotify-premium-student-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Student — месяц", priceUsd: 1.05, status: "Активна", note: "Нужна верификация" },
   { art: "TG-PREMI", slug: "telegram-premium-mesyats", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "Premium — месяц", priceUsd: 4.99, status: "Под заказ", note: "В РФ официально 299 ₽/мес через @PremiumBot — дешевле нашей закупки. Держим только как подарок другому аккаунту" },
   { art: "TG-PREMI-6M", slug: "telegram-premium-6-mes", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "Premium — 6 мес", priceUsd: 19.99, status: "Активна", note: "" },
   { art: "TG-PREMI-G", slug: "telegram-premium-god", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "Premium — год", priceUsd: 35.99, status: "Под заказ", note: "В РФ официально 1999 ₽/год через @PremiumBot — дешевле нашей закупки. Смысла в витрине нет" },
@@ -427,11 +427,22 @@ const catalog: ProductInput[] = [
   { art: "APL-100", slug: "apple-gift-card-100-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $100", priceUsd: 100, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
 ];
 
-export const products: Product[] = catalog.map((p, i) => ({
-  ...p,
-  id: i + 1,
-  ...priceOf(p.priceUsd, p.markup, p.categorySlug),
-}));
+/**
+ * Витрина. Из позиции намеренно вырезаны markup, costRub и marginRub:
+ * этот массив уезжает в браузер целиком, и всё, что в нём лежит,
+ * читается через F12. Внутренние цифры — в margins.ts.
+ */
+export const products: Product[] = catalog.map((p, i) => {
+  const { markup, ...shown } = p;
+  return {
+    ...shown,
+    id: i + 1,
+    priceRub: priceOf(p.priceUsd, markup, p.categorySlug).priceRub,
+  };
+});
+
+/** Сырой вход каталога — только для margins.ts, компонентами не импортируется. */
+export const catalogInput = catalog;
 
 export const getProductBySlug = (slug: string) =>
   products.find((p) => p.slug === slug);
@@ -469,15 +480,25 @@ export type TopupService = {
   min: number;
   max: number;
   step: number;
-  /** Себестоимость одной единицы в рублях */
-  costPerUnit: number;
-  markup: number;
+  /** Готовая розничная цена за одну единицу, в рублях */
+  pricePerUnit: number;
   /** Быстрые кнопки под полем ввода */
   presets: number[];
   note?: string;
 };
 
-export const topupServices: TopupService[] = [
+/**
+ * Внутренний вид услуги — с себестоимостью и наценкой.
+ * Наружу не экспортируется: калькулятор получает только готовую
+ * цену за единицу, без наших закупочных цифр.
+ */
+type TopupServiceInternal = Omit<TopupService, "pricePerUnit"> & {
+  /** Себестоимость одной единицы в рублях */
+  costPerUnit: number;
+  markup: number;
+};
+
+const topupSource: TopupServiceInternal[] = [
   {
     key: "steam",
     title: "Steam",
@@ -486,7 +507,11 @@ export const topupServices: TopupService[] = [
     placeholder: "например 1500",
     idLabel: "Логин Steam",
     idPlaceholder: "ваш логин или ссылка на профиль",
-    min: 100,
+    // Минимум 500, а не 100: на суммах ниже комиссия после округления
+    // схлопывается в ноль, калькулятор пишет «без комиссии» и противоречит
+    // тексту на главной. Плюс на 100 ₽ заработок — 2,5 ₽, ручной заказ
+    // столько не стоит.
+    min: 500,
     max: 15000,
     step: 10,
     // Себестоимость НИЖЕ номинала: у поставщика на пополнение Steam
@@ -495,12 +520,13 @@ export const topupServices: TopupService[] = [
     // списывается ~975 ₽. Здесь заложен Bronze как самый осторожный.
     // Поднялся уровень — поставь 0.97 или 0.9645.
     costPerUnit: 0.975,
-    // 3% сверху для клиента. Вместе со скидкой поставщика реальная
-    // маржа выходит ~5,5%, а цена всё равно ниже рынка: конкуренты
-    // держат 8–15%. Это позиция-приманка, а не основной заработок.
-    markup: 0.03,
+    // 7% сверху для клиента (было 3%, затем 5%). Вместе со скидкой
+    // поставщика реальная маржа выходит ~9,7%, а для покупателя
+    // переплата к номиналу — около 4,5%. Конкуренты держат 8–15%
+    // переплаты, так что цена остаётся заметно ниже рынка.
+    markup: 0.07,
     presets: [500, 1000, 2000, 5000],
-    note: "Зачисляется на кошелёк Steam по логину. Вход в аккаунт и пароль не нужны.",
+    note: "Зачисляется на кошелёк Steam по логину — вход в аккаунт и пароль не нужны. В цену включена комиссия сервиса: она уже посчитана выше, скрытых доплат при оформлении нет.",
   },
   {
     key: "stars",
@@ -513,7 +539,8 @@ export const topupServices: TopupService[] = [
     min: 50,
     max: 100000,
     step: 1,
-    costPerUnit: 1.204,
+    // Пересчитано под курс 87 (было 1.204 при курсе 86)
+    costPerUnit: 1.218,
     markup: 0.49,
     presets: [100, 500, 1000, 2500],
     note: "Зачисление по нику. Вход в аккаунт и пароль не требуются.",
@@ -529,20 +556,59 @@ export const topupServices: TopupService[] = [
     min: 100,
     max: 20000,
     step: 10,
-    costPerUnit: 0.859,
+    // Пересчитано под курс 87 (было 0.859 при курсе 86)
+    costPerUnit: 0.869,
     markup: 0.5,
     presets: [400, 1000, 2200, 4500],
   },
 ];
 
-/** Цена за произвольное количество: себестоимость + наценка, округление. */
+/**
+ * Публичный список услуг. Себестоимость и наценка схлопнуты в одну
+ * готовую цену за единицу — по ней нельзя восстановить, почём закупка.
+ */
+export const topupServices: TopupService[] = topupSource.map(
+  ({ costPerUnit, markup, ...shown }) => ({
+    ...shown,
+    pricePerUnit: costPerUnit * (1 + markup),
+  }),
+);
+
+/** Внутренний список с закупкой — только для margins.ts. */
+export const topupInternal = topupSource;
+
+/** Цена за произвольное количество. Считается из готовой цены за единицу. */
 export const topupPrice = (svc: TopupService, qty: number) => {
   const q = Math.min(Math.max(qty || 0, 0), svc.max);
-  const costRub = Math.round(q * svc.costPerUnit);
-  const raw = costRub * (1 + svc.markup);
-  const step = raw < 1000 ? 10 : raw < 10000 ? 10 : 50;
-  const priceRub = Math.round(raw / step) * step;
-  return { qty: q, costRub, priceRub, marginRub: priceRub - costRub };
+  const raw = q * svc.pricePerUnit;
+  const step = raw < 10000 ? 10 : 50;
+  let priceRub = Math.round(raw / step) * step;
+
+  // Страховка от расхождения на одном экране.
+  // Округление к ближайшему может съесть комиссию целиком: при наценке 3%
+  // ровно так и было — на 1 000 ₽ выходило 1 000 ₽, калькулятор писал
+  // «без переплаты», а заголовок рядом обещал комиссию 3%. Человек видит
+  // оба утверждения сразу и перестаёт верить обоим.
+  // Здесь цена не может оказаться равной номиналу или ниже.
+  if (svc.unit.includes("₽") && priceRub <= q) priceRub = q + step;
+
+  return {
+    qty: q,
+    priceRub,
+    /** Переплата к номиналу. Есть только у рублёвых пополнений. */
+    feeRub: svc.unit.includes("₽") ? priceRub - q : 0,
+    feePct: svc.unit.includes("₽") && q ? ((priceRub - q) / q) * 100 : 0,
+  };
+};
+
+/**
+ * Разброс комиссии по популярным суммам — для текста на главной.
+ * Считается тем же кодом, что и калькулятор, поэтому цифра в заголовке
+ * не может разойтись с цифрой в поле «К оплате».
+ */
+export const topupFeeRange = (svc: TopupService) => {
+  const pcts = svc.presets.map((p) => topupPrice(svc, p).feePct);
+  return { min: Math.min(...pcts), max: Math.max(...pcts) };
 };
 
 export const getTopup = (key: string) => topupServices.find((s) => s.key === key);

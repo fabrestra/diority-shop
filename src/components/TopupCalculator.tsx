@@ -18,8 +18,26 @@ const SLUG: Record<string, string> = {
   robux: "roblox",
 };
 
-export function TopupCalculator({ compact = false }: { compact?: boolean }) {
-  const [key, setKey] = useState(topupServices[0].key);
+/**
+ * @param compact    — узкий вариант для мини-приложения
+ * @param initialKey — какой сервис открыть сразу (для страниц категорий)
+ * @param lockService — спрятать переключатель: на странице Steam незачем
+ *                      предлагать Roblox, это лишний выбор перед действием
+ */
+export function TopupCalculator({
+  compact = false,
+  initialKey,
+  lockService = false,
+}: {
+  compact?: boolean;
+  initialKey?: string;
+  lockService?: boolean;
+}) {
+  const [key, setKey] = useState(
+    initialKey && topupServices.some((s) => s.key === initialKey)
+      ? initialKey
+      : topupServices[0].key,
+  );
   const svc = topupServices.find((s) => s.key === key)!;
   const [raw, setRaw] = useState<string>(String(svc.presets[1]));
   const [login, setLogin] = useState("");
@@ -74,6 +92,7 @@ export function TopupCalculator({ compact = false }: { compact?: boolean }) {
       )}
 
       {/* выбор сервиса */}
+      {!lockService && (
       <div className="mt-4 flex flex-wrap gap-2">
         {topupServices.map((s) => (
           <button
@@ -90,6 +109,7 @@ export function TopupCalculator({ compact = false }: { compact?: boolean }) {
           </button>
         ))}
       </div>
+      )}
 
       {/* ввод количества */}
       <label className="mt-5 block text-xs uppercase tracking-wide text-slate-400">

@@ -66,11 +66,15 @@ export function Hero() {
                   {" "}
                   Комиссия на пополнение Steam —{" "}
                   <strong className="text-white">
-                    {range
+                    {/* Если округление где-то даёт разброс — покажем вилку,
+                        иначе одно число. Считается из тех же данных, что
+                        и калькулятор справа. */}
+                    {range && range.min.toFixed(1) !== range.max.toFixed(1)
                       ? `${range.min.toFixed(1).replace(".", ",")}–${range.max
                           .toFixed(1)
                           .replace(".", ",")}%`
-                      : `${demo.feePct.toFixed(1)}%`}
+                      : `${(range ? range.min : demo.feePct)
+                          .toFixed(0)}%`}
                   </strong>{" "}
                   к номиналу: {demo.qty.toLocaleString("ru-RU")} ₽ на кошелёк —{" "}
                   {demo.priceRub.toLocaleString("ru-RU")} ₽ к оплате. Точная сумма

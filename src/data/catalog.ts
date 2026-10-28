@@ -7,7 +7,7 @@ import type { Product, ProductInput, Category, Warranty, Requirement } from "@/t
  */
 
 /** Сколько рублей реально стоит добыть $1 (закупка, со всеми комиссиями). */
-export const USD_COST_RATE = 87;
+export const USD_COST_RATE = 86.10;
 
 /**
  * Наценка по ступеням себестоимости.
@@ -44,6 +44,17 @@ const toRetail = (n: number) => {
  * AI и Supercell держим на 15%: спрос стабильный, сравнивают редко.
  */
 export const CATEGORY_MARKUP: Record<string, number> = {
+  manus: 0.15,
+  opencode: 0.15,
+  "character-ai": 0.15,
+  higgsfield: 0.15,
+  tripo: 0.15,
+  meshy: 0.15,
+  picsart: 0.15,
+  coursera: 0.15,
+  busuu: 0.15,
+  quizlet: 0.15,
+  zoom: 0.15,
   chatgpt: 0.15,
   claude: 0.15,
   perplexity: 0.15,
@@ -78,11 +89,11 @@ export const priceOf = (priceUsd: number, override?: number, categorySlug?: stri
 export const REQUIREMENTS: Record<string, Requirement> = {
   account: {
     title: "Что нужно для оформления",
-    text: "Электронная почта, на которую зарегистрирован аккаунт сервиса. Пароль не нужен. Если аккаунта ещё нет, подскажем, как его создать.",
+    text: "Сначала напишите название тарифа и страну аккаунта — проверим совместимость и срок до оплаты. Для ручного оформления может понадобиться согласованный вход в аккаунт. Не отправляйте пароль или коды входа в первом сообщении. После выполнения смените пароль.",
   },
   appleUs: {
     title: "Что нужно для оформления",
-    text: "Apple ID, зарегистрированный в США. Код от карты другой страны не активируется, а смена региона у существующего аккаунта не помогает. Проверим это вместе до оплаты, чтобы вы не потеряли деньги.",
+    text: "Apple Account с регионом США. Код другой страны не подойдёт. До оплаты проверьте регион аккаунта; доступ к аккаунту и пароль продавцу не нужны.",
   },
   steam: {
     title: "Что нужно для оформления",
@@ -108,6 +119,22 @@ export const REQUIREMENTS: Record<string, Requirement> = {
     title: "Что нужно для оформления",
     text: "Ваш ник в Telegram, начинается с собачки. Подписка приходит на этот аккаунт.",
   },
+  pubgId: {
+    title: "Что нужно для оформления",
+    text: "ID игрока PUBG Mobile — число в профиле игры. Пополнение приходит по ID, вход в аккаунт и пароль не нужны.",
+  },
+  genshinUid: {
+    title: "Что нужно для оформления",
+    text: "UID и сервер Genshin Impact (глобальная версия: Америка, Европа, Азия или TW/HK/MO). UID показан в углу экрана в игре. Пароль не нужен.",
+  },
+  freefireId: {
+    title: "Что нужно для оформления",
+    text: "ID игрока Free Fire из профиля. Аккаунт должен быть региона СНГ. Пароль не нужен.",
+  },
+  mlbbId: {
+    title: "Что нужно для оформления",
+    text: "ID игрока и Server ID Mobile Legends из профиля, например 12345678 (1234). Аккаунт должен быть региона RU. Пароль не нужен.",
+  },
   student: {
     title: "Что нужно для оформления",
     text: "Студенческая почта учебного заведения. Сервис проверяет её самостоятельно, без подтверждения тариф оформить нельзя.",
@@ -116,6 +143,17 @@ export const REQUIREMENTS: Record<string, Requirement> = {
 
 /** Какие требования у категории */
 export const CATEGORY_REQUIREMENT: Record<string, keyof typeof REQUIREMENTS> = {
+  manus: "account",
+  opencode: "account",
+  "character-ai": "account",
+  higgsfield: "account",
+  tripo: "account",
+  meshy: "account",
+  picsart: "account",
+  coursera: "account",
+  busuu: "account",
+  quizlet: "account",
+  zoom: "account",
   chatgpt: "account",
   claude: "account",
   perplexity: "account",
@@ -132,6 +170,10 @@ export const CATEGORY_REQUIREMENT: Record<string, keyof typeof REQUIREMENTS> = {
   "clash-royale": "gameTag",
   "clash-of-clans": "gameTag",
   roblox: "robloxNick",
+  "pubg-mobile": "pubgId",
+  "genshin-impact": "genshinUid",
+  "free-fire": "freefireId",
+  "mobile-legends": "mlbbId",
   "microsoft-store": "msAccount",
   rockstar: "rockstar",
 };
@@ -171,7 +213,7 @@ export const WARRANTY: Record<string, Warranty> = {
     covers:
       "Гарантия действует до момента зачисления. Если валюта или пасс не пришли на указанный аккаунт, доводим заказ до зачисления либо возвращаем деньги.",
     excludes:
-      "Не покрываем неверно указанный игровой тег, блокировку игрового аккаунта и претензии после подтверждения зачисления.",
+      "Не покрываем неверно указанный игровой тег или ID, блокировку игрового аккаунта и претензии после подтверждения зачисления.",
   },
   /** Позиции под заказ */
   none: {
@@ -184,6 +226,19 @@ export const WARRANTY: Record<string, Warranty> = {
 
 /** Какая гарантия действует для категории */
 export const CATEGORY_WARRANTY: Record<string, keyof typeof WARRANTY> = {
+  suno: "subscription",
+  midjourney: "subscription",
+  manus: "subscription",
+  opencode: "subscription",
+  "character-ai": "subscription",
+  higgsfield: "subscription",
+  tripo: "subscription",
+  meshy: "subscription",
+  picsart: "subscription",
+  coursera: "subscription",
+  busuu: "subscription",
+  quizlet: "subscription",
+  zoom: "subscription",
   chatgpt: "subscription",
   claude: "subscription",
   perplexity: "subscription",
@@ -202,6 +257,10 @@ export const CATEGORY_WARRANTY: Record<string, keyof typeof WARRANTY> = {
   "clash-royale": "ingame",
   "clash-of-clans": "ingame",
   roblox: "ingame",
+  "pubg-mobile": "ingame",
+  "genshin-impact": "ingame",
+  "free-fire": "ingame",
+  "mobile-legends": "ingame",
 };
 
 /** Гарантия для конкретной позиции. Под заказ — всегда индивидуально. */
@@ -211,27 +270,58 @@ export const warrantyFor = (p: { categorySlug: string; status: string }) =>
     : WARRANTY[CATEGORY_WARRANTY[p.categorySlug] ?? "code"];
 
 export const categories: Category[] = [
+  { name: "Suno", slug: "suno", description: "Музыка с AI — подписка Pro" },
+  { name: "Midjourney", slug: "midjourney", description: "Создание изображений — подписка Basic" },
   { name: "ChatGPT", slug: "chatgpt", description: "AI ассистент от OpenAI" },
   { name: "Claude", slug: "claude", description: "AI ассистент от Anthropic" },
   { name: "Perplexity", slug: "perplexity", description: "AI поиск нового поколения" },
+  { name: "Manus", slug: "manus", description: "AI-агент, который сам выполняет задачи" },
+  { name: "OpenCode", slug: "opencode", description: "AI-агент для программирования" },
+  { name: "Character.AI", slug: "character-ai", description: "Чаты с AI-персонажами, подписка c.ai+" },
+  { name: "Higgsfield", slug: "higgsfield", description: "AI-генерация видео и изображений" },
+  { name: "Tripo AI", slug: "tripo", description: "AI-генерация 3D-моделей" },
+  { name: "Meshy", slug: "meshy", description: "AI-генерация 3D-моделей и текстур" },
+  { name: "Picsart", slug: "picsart", description: "Фото- и видеоредактор с AI" },
+  { name: "Coursera", slug: "coursera", description: "Онлайн-курсы и сертификаты" },
+  { name: "Busuu", slug: "busuu", description: "Изучение иностранных языков" },
+  { name: "Quizlet", slug: "quizlet", description: "Карточки и подготовка к экзаменам" },
+  { name: "Zoom", slug: "zoom", description: "Видеовстречи Zoom Workplace" },
   { name: "Grok / X", slug: "grok", description: "AI от xAI (Илон Маск)" },
   { name: "Cursor", slug: "cursor", description: "AI редактор кода" },
   { name: "Google", slug: "google", description: "Gemini AI, Google One, YouTube Premium" },
   { name: "Brawl Stars", slug: "brawl-stars", description: "Гемы и пассы Brawl Stars" },
   { name: "Clash Royale", slug: "clash-royale", description: "Гемы и пассы Clash Royale" },
   { name: "Clash of Clans", slug: "clash-of-clans", description: "Гемы и пассы Clash of Clans" },
+  { name: "PUBG Mobile", slug: "pubg-mobile", description: "UC по ID игрока" },
+  { name: "Genshin Impact", slug: "genshin-impact", description: "Кристаллы сотворения по UID" },
+  { name: "Free Fire", slug: "free-fire", description: "Алмазы по ID, регион СНГ" },
+  { name: "Mobile Legends", slug: "mobile-legends", description: "Алмазы по ID, регион RU" },
   { name: "Roblox", slug: "roblox", description: "Робуксы и Roblox Plus" },
   { name: "Steam", slug: "steam", description: "Пополнение и игры Steam" },
   { name: "Microsoft Store", slug: "microsoft-store", description: "Игры и подписки MS" },
   { name: "Discord", slug: "discord", description: "Discord Nitro" },
   { name: "Netflix", slug: "netflix", description: "Стриминг Netflix" },
-  { name: "Spotify", slug: "spotify", description: "Музыка Spotify Premium" },
   { name: "Telegram", slug: "telegram", description: "Premium и Stars" },
   { name: "Rockstar", slug: "rockstar", description: "GTA+ и игры Rockstar" },
   { name: "Apple", slug: "apple", description: "Подарочные карты App Store и Apple Music" },
 ];
 
+/**
+ * РАЗДЕЛЫ — крупные группы над брендами. Каталог растёт, и ряд из 30 брендов
+ * уже не листают: сначала человек выбирает «Нейросети» или «Игры», потом бренд.
+ */
+export const SECTIONS: { slug: string; name: string; cats: string[] }[] = [
+  { slug: "ai", name: "Нейросети", cats: ["suno", "midjourney", "chatgpt", "claude", "perplexity", "grok", "cursor", "google", "manus", "opencode", "character-ai", "higgsfield", "tripo", "meshy"] },
+  { slug: "games", name: "Игры и донат", cats: ["pubg-mobile", "genshin-impact", "free-fire", "mobile-legends", "brawl-stars", "clash-royale", "clash-of-clans", "roblox"] },
+  { slug: "platforms", name: "Steam и платформы", cats: ["steam", "microsoft-store", "rockstar"] },
+  { slug: "media", name: "Музыка и видео", cats: ["netflix", "discord"] },
+  { slug: "study", name: "Учёба и работа", cats: ["coursera", "busuu", "quizlet", "zoom", "picsart"] },
+  { slug: "tg-apple", name: "Telegram и Apple", cats: ["telegram", "apple"] },
+];
+
 const catalog: ProductInput[] = [
+  { art: "SUN-PRO", slug: "suno-pro-mesyats", category: "Suno", categorySlug: "suno", platform: "Suno", name: "Suno Pro — месяц", priceUsd: 10, priceRubFixed: 1199, inquiryOnly: true, status: "Активна", note: "2500 кредитов в месяц. Оформление вручную на ваш аккаунт после согласования страны, текущего тарифа и срока. Оплата способом продавца ещё не проверена; сначала напишите в поддержку." },
+  { art: "MJ-BASIC", slug: "midjourney-basic-mesyats", category: "Midjourney", categorySlug: "midjourney", platform: "Midjourney", name: "Midjourney Basic — месяц", priceUsd: 10, priceRubFixed: 1199, inquiryOnly: true, status: "Активна", note: "200 минут Fast GPU. Не безлимитный тариф. Оформление вручную на ваш аккаунт после согласования. Оплата способом продавца ещё не проверена; сначала напишите в поддержку." },
   { art: "GPT-GO", slug: "chatgpt-chatgpt-go-mesyats", category: "ChatGPT", categorySlug: "chatgpt", platform: "", name: "ChatGPT Go — месяц", priceUsd: 8, status: "Активна", note: "Дешёвый AI для базового использования" },
   { art: "GPT-PLUS", slug: "chatgpt-chatgpt-plus-mesyats", category: "ChatGPT", categorySlug: "chatgpt", platform: "", name: "ChatGPT Plus — месяц", priceUsd: 20, status: "Активна", note: "Самая популярная позиция" },
   { art: "GPT-PRO100", slug: "chatgpt-chatgpt-pro-usd100-mesyats", category: "ChatGPT", categorySlug: "chatgpt", platform: "", name: "ChatGPT Pro $100 — месяц", priceUsd: 100, status: "Активна", note: "Расширенные лимиты и доступ к продвинутым моделям" },
@@ -244,6 +334,22 @@ const catalog: ProductInput[] = [
   { art: "PLX-PRO-G", slug: "perplexity-perplexity-pro-god", category: "Perplexity", categorySlug: "perplexity", platform: "", name: "Perplexity Pro — год", priceUsd: 200, status: "Активна", note: "Выгоднее помесячной оплаты примерно на 17 процентов" },
   { art: "PLX-MAX", slug: "perplexity-perplexity-max-mesyats", category: "Perplexity", categorySlug: "perplexity", platform: "", name: "Perplexity Max — месяц", priceUsd: 200, status: "Активна", note: "Доступ сразу к нескольким топовым моделям в одном тарифе" },
   { art: "PLX-EDUCAPRO", slug: "perplexity-perplexity-education-pro-mesyats", category: "Perplexity", categorySlug: "perplexity", platform: "", name: "Perplexity Education Pro — месяц", priceUsd: 10, status: "Активна", note: "Студенческий тариф. Понадобится почта учебного заведения" },
+  { art: "MNS-STD", slug: "manus-standard-mesyats", category: "Manus", categorySlug: "manus", platform: "", name: "Manus Standard — месяц", priceUsd: 20, status: "Активна", note: "AI-агент: исследования, сайты, презентации и задачи «под ключ». Оформляем на ваш аккаунт." },
+  { art: "MNS-STD-G", slug: "manus-standard-god", category: "Manus", categorySlug: "manus", platform: "", name: "Manus Standard — год", priceUsd: 200, status: "Активна", note: "Выгоднее помесячной оплаты примерно на 17%." },
+  { art: "OPC-GO", slug: "opencode-go-mesyats", category: "OpenCode", categorySlug: "opencode", platform: "", name: "OpenCode Go — месяц", priceUsd: 10, status: "Активна", note: "Подписка на модели для AI-агента OpenCode в терминале и редакторе." },
+  { art: "CAI-PLUS", slug: "character-ai-c-ai-plus-mesyats", category: "Character.AI", categorySlug: "character-ai", platform: "", name: "c.ai+ — месяц", priceUsd: 9.99, status: "Активна", note: "Ответы без очередей, улучшенная память персонажей. Оформляем на ваш аккаунт." },
+  { art: "CAI-PLUS-G", slug: "character-ai-c-ai-plus-god", category: "Character.AI", categorySlug: "character-ai", platform: "", name: "c.ai+ — год", priceUsd: 94.99, status: "Активна", note: "Выгоднее помесячной оплаты примерно на 20%." },
+  { art: "HGF-START", slug: "higgsfield-starter-mesyats", category: "Higgsfield", categorySlug: "higgsfield", platform: "", name: "Higgsfield Starter — месяц", priceUsd: 15, status: "Активна", note: "Стартовый тариф: ежемесячные кредиты на генерацию видео и изображений." },
+  { art: "HGF-PLUS", slug: "higgsfield-plus-mesyats", category: "Higgsfield", categorySlug: "higgsfield", platform: "", name: "Higgsfield Plus — месяц", priceUsd: 34, status: "Активна", note: "Больше кредитов и доступ к топовым видеомоделям." },
+  { art: "TRP-PRO", slug: "tripo-ai-pro-mesyats", category: "Tripo AI", categorySlug: "tripo", platform: "", name: "Tripo AI Pro — месяц", priceUsd: 20, status: "Активна", note: "3000 кредитов в месяц на генерацию 3D-моделей." },
+  { art: "MSH-PRO", slug: "meshy-pro-mesyats", category: "Meshy", categorySlug: "meshy", platform: "", name: "Meshy Pro — месяц", priceUsd: 20, status: "Активна", note: "1000 кредитов в месяц на 3D-модели и текстуры." },
+  { art: "PCS-PRO", slug: "picsart-pro-mesyats", category: "Picsart", categorySlug: "picsart", platform: "", name: "Picsart Pro — месяц", priceUsd: 15, status: "Активна", note: "Премиум-шаблоны, шрифты и AI-инструменты без водяных знаков." },
+  { art: "PCS-PRO-G", slug: "picsart-pro-god", category: "Picsart", categorySlug: "picsart", platform: "", name: "Picsart Pro — год", priceUsd: 126, status: "Активна", note: "Выгоднее помесячной оплаты примерно на 30%." },
+  { art: "CRS-PLUS", slug: "coursera-plus-mesyats", category: "Coursera", categorySlug: "coursera", platform: "", name: "Coursera Plus — месяц", priceUsd: 59, status: "Активна", note: "Безлимитный доступ к тысячам курсов и сертификатов." },
+  { art: "BSU-PREM", slug: "busuu-premium-mesyats", category: "Busuu", categorySlug: "busuu", platform: "", name: "Busuu Premium — месяц", priceUsd: 13.99, status: "Активна", note: "Все языки и уроки, офлайн-режим." },
+  { art: "QZL-PLUS", slug: "quizlet-plus-mesyats", category: "Quizlet", categorySlug: "quizlet", platform: "", name: "Quizlet Plus — месяц", priceUsd: 7.99, status: "Активна", note: "Без рекламы, режим «Заучивание» и тесты без ограничений." },
+  { art: "QZL-PLUS-G", slug: "quizlet-plus-god", category: "Quizlet", categorySlug: "quizlet", platform: "", name: "Quizlet Plus — год", priceUsd: 35.99, status: "Активна", note: "Выгоднее помесячной оплаты более чем в 2,5 раза." },
+  { art: "ZOM-PRO", slug: "zoom-pro-mesyats", category: "Zoom", categorySlug: "zoom", platform: "", name: "Zoom Pro — месяц", priceUsd: 16.99, status: "Активна", note: "Длинные встречи до 100 участников, облачная запись." },
   { art: "GRK-X", slug: "grok-x-premium-grok-bundled", category: "Grok / X", categorySlug: "grok", platform: "", name: "X Premium (Grok bundled)", priceUsd: 8, status: "Активна", note: "Самый дешёвый доступ к Grok" },
   { art: "GRK-SUPERLITE", slug: "grok-supergrok-lite-mesyats", category: "Grok / X", categorySlug: "grok", platform: "", name: "SuperGrok Lite — месяц", priceUsd: 10, status: "Активна", note: "Базовый Grok без X-перков" },
   { art: "GRK-SUPER", slug: "grok-supergrok-mesyats", category: "Grok / X", categorySlug: "grok", platform: "", name: "SuperGrok — месяц", priceUsd: 30, status: "Активна", note: "" },
@@ -294,6 +400,28 @@ const catalog: ProductInput[] = [
   { art: "COC-GEMS14000", slug: "clash-of-clans-14000-gems", category: "Clash of Clans", categorySlug: "clash-of-clans", platform: "iOS/Android", name: "14000 Gems", priceUsd: 99.99, status: "Активна", note: "Покупка совершается во внутриигровом магазине на вашем аккаунте: нужен временный вход по одноразовому коду Supercell ID, пароль не передаётся" },
   { art: "COC-SET", slug: "clash-of-clans-nabor-stroitelya", category: "Clash of Clans", categorySlug: "clash-of-clans", platform: "iOS/Android", name: "Набор Строителя", priceUsd: 9.99, status: "Активна", note: "Покупка совершается во внутриигровом магазине на вашем аккаунте: нужен временный вход по одноразовому коду Supercell ID, пароль не передаётся" },
   { art: "COC-RESOUBUNDL", slug: "clash-of-clans-resource-bundle-standart", category: "Clash of Clans", categorySlug: "clash-of-clans", platform: "iOS/Android", name: "Resource Bundle (стандарт)", priceUsd: 4.99, status: "Активна", note: "Покупка совершается во внутриигровом магазине на вашем аккаунте: нужен временный вход по одноразовому коду Supercell ID, пароль не передаётся" },
+  // ── Пополнения по ID игрока (21.10). Цена = сумма товара в Tribute (priceRubFixed).
+  // priceUsd: 0 — намеренно: этот файл целиком попадает в JS-бандл сайта, а закупку
+  // конкурентам видеть незачем. Себестоимость — в diority-automation (реестр Tribute).
+  { art: "PUBG-UC325", slug: "pubg-mobile-325-uc", category: "PUBG Mobile", categorySlug: "pubg-mobile", platform: "iOS/Android", name: "325 UC", priceUsd: 0, priceRubFixed: 407, paySku: "pubg-325", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "PUBG-UC660", slug: "pubg-mobile-660-uc", category: "PUBG Mobile", categorySlug: "pubg-mobile", platform: "iOS/Android", name: "660 UC", priceUsd: 0, priceRubFixed: 814, paySku: "pubg-660", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "PUBG-UC1800", slug: "pubg-mobile-1800-uc", category: "PUBG Mobile", categorySlug: "pubg-mobile", platform: "iOS/Android", name: "1800 UC", priceUsd: 0, priceRubFixed: 2042, paySku: "pubg-1800", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "PUBG-UC3850", slug: "pubg-mobile-3850-uc", category: "PUBG Mobile", categorySlug: "pubg-mobile", platform: "iOS/Android", name: "3850 UC", priceUsd: 0, priceRubFixed: 4079, paySku: "pubg-3850", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "GI-60", slug: "genshin-impact-60", category: "Genshin Impact", categorySlug: "genshin-impact", platform: "iOS/Android", name: "60 кристаллов сотворения", priceUsd: 0, priceRubFixed: 100, paySku: "genshin-60", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "GI-330", slug: "genshin-impact-300-30", category: "Genshin Impact", categorySlug: "genshin-impact", platform: "iOS/Android", name: "300 + 30 кристаллов сотворения", priceUsd: 0, priceRubFixed: 466, paySku: "genshin-300-30", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "GI-1090", slug: "genshin-impact-980-110", category: "Genshin Impact", categorySlug: "genshin-impact", platform: "iOS/Android", name: "980 + 110 кристаллов сотворения", priceUsd: 0, priceRubFixed: 1396, paySku: "genshin-980-110", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "GI-2240", slug: "genshin-impact-1980-260", category: "Genshin Impact", categorySlug: "genshin-impact", platform: "iOS/Android", name: "1980 + 260 кристаллов сотворения", priceUsd: 0, priceRubFixed: 2791, paySku: "genshin-1980-260", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "FF-341", slug: "free-fire-341-almazov", category: "Free Fire", categorySlug: "free-fire", platform: "iOS/Android", name: "341 алмаз (регион СНГ)", priceUsd: 0, priceRubFixed: 220, paySku: "freefire-341", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "FF-572", slug: "free-fire-572-almazov", category: "Free Fire", categorySlug: "free-fire", platform: "iOS/Android", name: "572 алмаза (регион СНГ)", priceUsd: 0, priceRubFixed: 357, paySku: "freefire-572", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "FF-1166", slug: "free-fire-1166-almazov", category: "Free Fire", categorySlug: "free-fire", platform: "iOS/Android", name: "1166 алмазов (регион СНГ)", priceUsd: 0, priceRubFixed: 715, paySku: "freefire-1166", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "FF-2398", slug: "free-fire-2398-almazov", category: "Free Fire", categorySlug: "free-fire", platform: "iOS/Android", name: "2398 алмазов (регион СНГ)", priceUsd: 0, priceRubFixed: 1429, paySku: "freefire-2398", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "FF-6160", slug: "free-fire-6160-almazov", category: "Free Fire", categorySlug: "free-fire", platform: "iOS/Android", name: "6160 алмазов (регион СНГ)", priceUsd: 0, priceRubFixed: 3620, paySku: "freefire-6160", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "ML-165", slug: "mobile-legends-165-almazov", category: "Mobile Legends", categorySlug: "mobile-legends", platform: "iOS/Android", name: "165 алмазов (регион RU)", priceUsd: 0, priceRubFixed: 263, paySku: "mlbb-165", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "ML-275", slug: "mobile-legends-275-almazov", category: "Mobile Legends", categorySlug: "mobile-legends", platform: "iOS/Android", name: "275 алмазов (регион RU)", priceUsd: 0, priceRubFixed: 438, paySku: "mlbb-275", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "ML-565", slug: "mobile-legends-565-almazov", category: "Mobile Legends", categorySlug: "mobile-legends", platform: "iOS/Android", name: "565 алмазов (регион RU)", priceUsd: 0, priceRubFixed: 881, paySku: "mlbb-565", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "ML-1155", slug: "mobile-legends-1155-almazov", category: "Mobile Legends", categorySlug: "mobile-legends", platform: "iOS/Android", name: "1155 алмазов (регион RU)", priceUsd: 0, priceRubFixed: 1766, paySku: "mlbb-1155", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "ML-1765", slug: "mobile-legends-1765-almazov", category: "Mobile Legends", categorySlug: "mobile-legends", platform: "iOS/Android", name: "1765 алмазов (регион RU)", priceUsd: 0, priceRubFixed: 2641, paySku: "mlbb-1765", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
+  { art: "ML-2975", slug: "mobile-legends-2975-almazov", category: "Mobile Legends", categorySlug: "mobile-legends", platform: "iOS/Android", name: "2975 алмазов (регион RU)", priceUsd: 0, priceRubFixed: 4407, paySku: "mlbb-2975", status: "Активна", note: "Пополнение по ID игрока, вход в аккаунт и пароль не нужны. Выполняем вручную, до 24 часов." },
   { art: "RBX-ROBUX400", slug: "roblox-400-robux", category: "Roblox", categorySlug: "roblox", platform: "PC/Web", name: "400 Robux", priceUsd: 4.99, status: "Активна", note: "Через сайт дешевле, чем через приложение" },
   { art: "RBX-ROBUX1000", slug: "roblox-1000-robux", category: "Roblox", categorySlug: "roblox", platform: "PC/Web", name: "1000 Robux", priceUsd: 9.99, status: "Активна", note: "" },
   { art: "RBX-ROBUX2200", slug: "roblox-2200-robux", category: "Roblox", categorySlug: "roblox", platform: "PC/Web", name: "2200 Robux", priceUsd: 19.99, status: "Активна", note: "" },
@@ -304,6 +432,7 @@ const catalog: ProductInput[] = [
   { art: "RBX-PLUS500", slug: "roblox-roblox-plus-500-mesyats", category: "Roblox", categorySlug: "roblox", platform: "PC/Web", name: "Roblox Plus 500 — месяц", priceUsd: 9.99, status: "Активна", note: "Plus + 500 Robux ежемесячно" },
   { art: "RBX-PLUS1000", slug: "roblox-roblox-plus-1000-mesyats", category: "Roblox", categorySlug: "roblox", platform: "PC/Web", name: "Roblox Plus 1000 — месяц", priceUsd: 14.99, status: "Активна", note: "Plus + 1000 Robux ежемесячно" },
   { art: "RBX-PLUS2000", slug: "roblox-roblox-plus-2000-mesyats", category: "Roblox", categorySlug: "roblox", platform: "PC/Web", name: "Roblox Plus 2000 — месяц", priceUsd: 24.99, status: "Активна", note: "Plus + 2000 Robux ежемесячно" },
+  { art: "STM-RUB100", slug: "steam-popolnenie-100-rub", category: "Steam", categorySlug: "steam", platform: "PC", name: "Пополнение кошелька 100 ₽", priceUsd: 0, priceRubFixed: 103, paySku: "steam-100", status: "Активна", note: "100 ₽ на кошелёк Steam (аккаунт с рублёвым кошельком), комиссия 3% уже в цене. После оплаты пришлите логин Steam. Пароль не нужен. Выполняем вручную, до 24 часов." },
   { art: "STM-5", slug: "steam-steam-wallet-usd5", category: "Steam", categorySlug: "steam", platform: "PC", name: "Steam Wallet $5", priceUsd: 5.5, markup: 0.08, status: "Активна", note: "Пополнение кошелька Steam. Приходит на ваш аккаунт" },
   { art: "STM-10", slug: "steam-steam-wallet-usd10", category: "Steam", categorySlug: "steam", platform: "PC", name: "Steam Wallet $10", priceUsd: 11, markup: 0.08, status: "Активна", note: "" },
   { art: "STM-20", slug: "steam-steam-wallet-usd20", category: "Steam", categorySlug: "steam", platform: "PC", name: "Steam Wallet $20", priceUsd: 21.5, markup: 0.08, status: "Активна", note: "" },
@@ -335,19 +464,24 @@ const catalog: ProductInput[] = [
   { art: "NFX-K4", slug: "netflix-premium-4k-mesyats", category: "Netflix", categorySlug: "netflix", platform: "", name: "Premium 4K — месяц", priceUsd: 26.99, status: "Активна", note: "До 6 стримов, 4K" },
   { art: "NFX-EXTRAMEMBE", slug: "netflix-extra-member-s-reklamoy", category: "Netflix", categorySlug: "netflix", platform: "", name: "Extra Member (с рекламой)", priceUsd: 6.99, status: "Активна", note: "Дополнительный член" },
   { art: "NFX-EXTRAMEMBE2", slug: "netflix-extra-member-bez-reklamy", category: "Netflix", categorySlug: "netflix", platform: "", name: "Extra Member (без рекламы)", priceUsd: 9.99, status: "Активна", note: "" },
-  { art: "SPT-INDIV", slug: "spotify-premium-individual-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Individual — месяц", priceUsd: 2.09, status: "Активна", note: "Музыка без рекламы, офлайн-режим" },
-  { art: "SPT-DUO", slug: "spotify-premium-duo-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Duo — месяц", priceUsd: 2.79, status: "Активна", note: "На двоих" },
-  { art: "SPT-FAMIL", slug: "spotify-premium-family-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Family — месяц", priceUsd: 3.49, status: "Активна", note: "До 6 аккаунтов" },
-  { art: "SPT-STUDE", slug: "spotify-premium-student-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Student — месяц", priceUsd: 1.05, status: "Активна", note: "Нужна верификация" },
+  { art: "SPT-IND-IN", slug: "spotify-premium-india-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Individual — Индия, месяц", priceUsd: 1.4667, status: "Архив", note: "Продажи приостановлены: регион платёжного средства не подтверждён." },
+  { art: "SPT-IND-NG", slug: "spotify-premium-nigeria-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Individual — Нигерия, месяц", priceUsd: 1.1997, status: "Архив", note: "Продажи приостановлены: регион платёжного средства не подтверждён." },
+  { art: "SPT-IND-EG", slug: "spotify-premium-egypt-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Individual — Египет, месяц", priceUsd: 1.4491, status: "Архив", note: "Продажи приостановлены: регион платёжного средства не подтверждён." },
+  { art: "SPT-IND-TR", slug: "spotify-premium-turkey-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Individual — Турция, месяц", priceUsd: 2.3229, status: "Архив", note: "Продажи приостановлены: регион платёжного средства не подтверждён." },
+  { art: "SPT-IND-KZ", slug: "spotify-premium-kazakhstan-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Individual — Казахстан, месяц", priceUsd: 4.99, status: "Архив", note: "Продажи приостановлены: регион платёжного средства не подтверждён." },
+  { art: "SPT-IND-PL", slug: "spotify-premium-poland-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Individual — Польша, месяц", priceUsd: 6.9278, status: "Архив", note: "Продажи приостановлены: регион платёжного средства не подтверждён." },
+  { art: "SPT-IND-US", slug: "spotify-premium-usa-mesyats", category: "Spotify", categorySlug: "spotify", platform: "", name: "Premium Individual — США, месяц", priceUsd: 12.99, status: "Архив", note: "Продажи приостановлены: регион платёжного средства не подтверждён." },
   { art: "TG-PREMI", slug: "telegram-premium-mesyats", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "Premium — месяц", priceUsd: 4.99, status: "Под заказ", note: "В РФ официально 299 ₽/мес через @PremiumBot — дешевле нашей закупки. Держим только как подарок другому аккаунту" },
   { art: "TG-PREMI-6M", slug: "telegram-premium-6-mes", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "Premium — 6 мес", priceUsd: 19.99, status: "Активна", note: "" },
   { art: "TG-PREMI-G", slug: "telegram-premium-god", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "Premium — год", priceUsd: 35.99, status: "Под заказ", note: "В РФ официально 1999 ₽/год через @PremiumBot — дешевле нашей закупки. Смысла в витрине нет" },
   { art: "TG-PREMI-G2", slug: "telegram-premium-god-fragment-ton", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "Premium — год (Fragment TON)", priceUsd: 29, status: "Активна", note: "Годовая подписка со скидкой. В России Premium дешевле оформить напрямую, подскажем как" },
-  { art: "TG-STARS500", slug: "telegram-500-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "500 Stars", priceUsd: 7, status: "Активна", note: "" },
-  { art: "TG-STARS1000", slug: "telegram-1000-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "1000 Stars", priceUsd: 14, status: "Активна", note: "" },
-  { art: "TG-STARS2500", slug: "telegram-2500-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "2500 Stars", priceUsd: 35, status: "Активна", note: "" },
-  { art: "TG-STARS5000", slug: "telegram-5000-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "5000 Stars", priceUsd: 70, status: "Активна", note: "" },
-  { art: "TG-STARS10000", slug: "telegram-10000-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "10000 Stars", priceUsd: 140, status: "Активна", note: "Самый крупный пакет" },
+  { art: "TG-STARS100", slug: "telegram-100-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "100 Stars", priceUsd: 0, priceRubFixed: 142, paySku: "stars-100", status: "Активна", note: "Зачисление по @username, вход в аккаунт не нужен" },
+  { art: "TG-STARS250", slug: "telegram-250-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "250 Stars", priceUsd: 0, priceRubFixed: 355, paySku: "stars-250", status: "Активна", note: "Зачисление по @username, вход в аккаунт не нужен" },
+  { art: "TG-STARS500", slug: "telegram-500-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "500 Stars", priceUsd: 7, priceRubFixed: 709, paySku: "stars-500", status: "Активна", note: "" },
+  { art: "TG-STARS1000", slug: "telegram-1000-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "1000 Stars", priceUsd: 14, priceRubFixed: 1417, paySku: "stars-1000", status: "Активна", note: "" },
+  { art: "TG-STARS2500", slug: "telegram-2500-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "2500 Stars", priceUsd: 35, priceRubFixed: 3542, status: "Активна", note: "" },
+  { art: "TG-STARS5000", slug: "telegram-5000-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "5000 Stars", priceUsd: 70, priceRubFixed: 7083, status: "Активна", note: "" },
+  { art: "TG-STARS10000", slug: "telegram-10000-stars", category: "Telegram", categorySlug: "telegram", platform: "Cross-platform", name: "10000 Stars", priceUsd: 140, priceRubFixed: 14165, status: "Активна", note: "Самый крупный пакет" },
   { art: "RST-GTAMEMBE", slug: "rockstar-gta-plus-membership-mesyats", category: "Rockstar", categorySlug: "rockstar", platform: "PC/Console", name: "GTA+ Membership — месяц", priceUsd: 7.99, status: "Активна", note: "GTA Online премиум" },
   { art: "RST-GTAV", slug: "rockstar-gta-v-enhanced-pc", category: "Rockstar", categorySlug: "rockstar", platform: "PC/Console", name: "GTA V Enhanced (PC)", priceUsd: 39.99, status: "Активна", note: "" },
   { art: "RST-GTAV2", slug: "rockstar-gta-v-legacy-pc", category: "Rockstar", categorySlug: "rockstar", platform: "PC/Console", name: "GTA V Legacy (PC)", priceUsd: 29.99, status: "Активна", note: "" },
@@ -414,17 +548,17 @@ const catalog: ProductInput[] = [
   { art: "APL-UK-25", slug: "apple-gift-card-uk-25", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card £25 (Великобритания)", priceUsd: 33.78, status: "Черновик", note: "Аккаунт должен быть зарегистрирован в стране: Великобритания" },
   { art: "APL-UK-50", slug: "apple-gift-card-uk-50", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card £50 (Великобритания)", priceUsd: 67.57, status: "Черновик", note: "Аккаунт должен быть зарегистрирован в стране: Великобритания" },
   { art: "APL-UK-100", slug: "apple-gift-card-uk-100", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card £100 (Великобритания)", priceUsd: 135.14, status: "Черновик", note: "Аккаунт должен быть зарегистрирован в стране: Великобритания" },
-  { art: "APL-2", slug: "apple-gift-card-2-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $2", priceUsd: 2, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
-  { art: "APL-3", slug: "apple-gift-card-3-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $3", priceUsd: 3, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
-  { art: "APL-4", slug: "apple-gift-card-4-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $4", priceUsd: 4, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
-  { art: "APL-5", slug: "apple-gift-card-5-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $5", priceUsd: 5, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
-  { art: "APL-8", slug: "apple-gift-card-8-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $8", priceUsd: 8, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
-  { art: "APL-9", slug: "apple-gift-card-9-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $9", priceUsd: 9, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
-  { art: "APL-10", slug: "apple-gift-card-10-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $10", priceUsd: 10, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
-  { art: "APL-15", slug: "apple-gift-card-15-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $15", priceUsd: 15, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
-  { art: "APL-25", slug: "apple-gift-card-25-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $25", priceUsd: 25, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
-  { art: "APL-50", slug: "apple-gift-card-50-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $50", priceUsd: 50, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
-  { art: "APL-100", slug: "apple-gift-card-100-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $100", priceUsd: 100, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-2", slug: "apple-gift-card-2-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $2", priceUsd: 2, priceRubFixed: 190, paySku: "apple-2-usd", status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-3", slug: "apple-gift-card-3-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $3", priceUsd: 3, priceRubFixed: 285, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-4", slug: "apple-gift-card-4-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $4", priceUsd: 4, priceRubFixed: 379, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-5", slug: "apple-gift-card-5-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $5", priceUsd: 5, priceRubFixed: 458, paySku: "apple-5-usd", status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-8", slug: "apple-gift-card-8-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $8", priceUsd: 8, priceRubFixed: 758, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-9", slug: "apple-gift-card-9-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $9", priceUsd: 9, priceRubFixed: 853, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-10", slug: "apple-gift-card-10-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $10", priceUsd: 10, priceRubFixed: 947, paySku: "apple-10-usd", status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-15", slug: "apple-gift-card-15-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $15", priceUsd: 15, priceRubFixed: 1375, paySku: "apple-15-usd", status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-25", slug: "apple-gift-card-25-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $25", priceUsd: 25, priceRubFixed: 2292, paySku: "apple-25-usd", status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-50", slug: "apple-gift-card-50-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $50", priceUsd: 50, priceRubFixed: 4734, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
+  { art: "APL-100", slug: "apple-gift-card-100-usd", category: "Apple", categorySlug: "apple", platform: "App Store / iTunes", name: "Apple Gift Card $100", priceUsd: 100, priceRubFixed: 9468, status: "Активна", note: "Аккаунт должен быть ЗАРЕГИСТРИРОВАН в США: смена региона код не активирует" },
 ];
 
 /**
@@ -432,17 +566,25 @@ const catalog: ProductInput[] = [
  * этот массив уезжает в браузер целиком, и всё, что в нём лежит,
  * читается через F12. Внутренние цифры — в margins.ts.
  */
-export const products: Product[] = catalog.map((p, i) => {
-  const { markup, ...shown } = p;
+export const products: Product[] = catalog.filter((p) => p.categorySlug !== "spotify").map((p, i) => {
+  const { markup, priceRubFixed, ...shown } = p;
   return {
     ...shown,
     id: i + 1,
-    priceRub: priceOf(p.priceUsd, markup, p.categorySlug).priceRub,
+    // Фиксированная цена совпадает с суммой в платёжной форме — её не пересчитываем.
+    priceRub: priceRubFixed ?? priceOf(p.priceUsd, markup, p.categorySlug).priceRub,
   };
 });
 
 /** Сырой вход каталога — только для margins.ts, компонентами не импортируется. */
 export const catalogInput = catalog;
+
+/**
+ * SKU позиции в журнале заказов магазина (бот, мини-приложение, сайт).
+ * У позиций из реестра Tribute — его sku; у остальных — slug страницы.
+ * Список всех таких позиций сервер получает из /catalog.json при выкладке бота.
+ */
+export const shopSkuOf = (p: { paySku?: string; slug: string }) => p.paySku ?? p.slug;
 
 export const getProductBySlug = (slug: string) =>
   products.find((p) => p.slug === slug);
@@ -503,15 +645,15 @@ const topupSource: TopupServiceInternal[] = [
     key: "steam",
     title: "Steam",
     unit: "₽ на баланс",
-    need: "логин Steam или ссылка на профиль",
+    need: "логин Steam — тот, которым вы входите в аккаунт (не ник и не ссылка)",
     placeholder: "например 1500",
     idLabel: "Логин Steam",
-    idPlaceholder: "ваш логин или ссылка на профиль",
+    idPlaceholder: "логин для входа в Steam",
     // Минимум 40 ₽. Мелкие суммы держим сознательно: человек, который
     // пришёл докинуть 50 ₽ до игры, потом возвращается за крупным.
     // Округление до рубля (см. topupPrice) не даёт комиссии схлопнуться
     // в ноль даже здесь.
-    min: 40,
+    min: 50,
     max: 15000,
     step: 10,
     // Себестоимость НИЖЕ номинала: у поставщика на пополнение Steam

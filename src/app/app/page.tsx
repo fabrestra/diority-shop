@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { categories, getActiveProducts, warrantyFor, requirementFor } from "@/data/catalog";
+import { SECTIONS, categories, getActiveProducts, warrantyFor, requirementFor, shopSkuOf } from "@/data/catalog";
 import { MiniApp } from "@/components/MiniApp";
+import { payLinkFor } from "@/data/payLinks";
 
 export const metadata: Metadata = {
   title: "Каталог Diority",
@@ -26,6 +27,8 @@ export default function MiniAppPage() {
     note: p.note,
     warranty: warrantyFor(p).label,
     need: requirementFor(p).text,
+    paySku: p.inquiryOnly ? undefined : shopSkuOf(p),
+    payUrl: payLinkFor(p.paySku),
   }));
 
   const cats = categories
@@ -36,5 +39,9 @@ export default function MiniAppPage() {
     }))
     .filter((c) => c.count > 0);
 
-  return <MiniApp items={items} cats={cats} />;
+  const sections = SECTIONS.map((x) => ({ ...x, cats: x.cats.filter((c) => cats.some((k) => k.slug === c)) })).filter(
+    (x) => x.cats.length > 0,
+  );
+
+  return <MiniApp items={items} cats={cats} sections={sections} />;
 }

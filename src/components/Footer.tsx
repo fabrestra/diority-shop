@@ -25,6 +25,9 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-[var(--color-text-muted)]">
               <li><Link className="hover:text-white" href="/about">О нас</Link></li>
               <li><Link className="hover:text-white" href="/contacts">Контакты</Link></li>
+              <li><Link className="hover:text-white" href="/payment">Оплата и возврат</Link></li>
+              <li><Link className="hover:text-white" href="/terms">Пользовательское соглашение</Link></li>
+              <li><Link className="hover:text-white" href="/privacy">Конфиденциальность</Link></li>
             </ul>
           </div>
           <div>
@@ -44,7 +47,8 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t border-[var(--color-border)] pt-6 text-xs text-[var(--color-text-muted)]">
-          © {new Date().getFullYear()} {config.brand.name}. Все права защищены.
+          <p>© {new Date().getFullYear()} {config.brand.name}. {config.legal.seller || "Реквизиты продавца будут указаны после регистрации."}</p>
+          <p className="mt-1">Доступные способы оплаты показаны на странице товара. Перед оплатой согласуйте условия и срок. Diority не связан с правообладателями игр и сервисов.</p>
         </div>
       </div>
     </footer>

@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getProductBySlug, getProductsByCategory, products, getCategoryBySlug, warrantyFor, requirementFor } from "@/data/catalog";
+import { getProductBySlug, getProductsByCategory, products, getCategoryBySlug, warrantyFor, requirementFor, shopSkuOf } from "@/data/catalog";
 import { BuyButton } from "@/components/BuyButton";
+import { payLinkFor } from "@/data/payLinks";
 import { ProductCard } from "@/components/ProductCard";
 import { BrandIcon } from "@/components/BrandIcon";
 import { ProductVisual } from "@/components/ProductVisual";
@@ -59,6 +60,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <div className="mt-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
             <h2 className="mb-2 text-base font-semibold">{req.title}</h2>
             <p className="text-sm leading-relaxed text-[var(--color-text-muted)]">{req.text}</p>
+            {p.note && <p className="mt-3 text-sm leading-relaxed text-[var(--color-text-muted)]">{p.note}</p>}
           </div>
 
           <div className="mt-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5">
@@ -77,11 +79,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <ol className="space-y-2.5 text-sm text-[var(--color-text-muted)]">
               <li className="flex gap-2.5">
                 <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-mint-soft)] text-[10px] font-bold text-[var(--color-mint)]">1</span>
-                Нажимаете кнопку «Купить». Откроется Telegram с готовым сообщением
+                {p.status === "Активна" && !p.inquiryOnly ? "Выбираете способ оплаты на этой странице" : "Нажимаете кнопку «Купить». Откроется Telegram с готовым сообщением"}
               </li>
               <li className="flex gap-2.5">
                 <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-mint-soft)] text-[10px] font-bold text-[var(--color-mint)]">2</span>
-                Проверяем наличие, называем точную сумму и способ оплаты
+                {p.status === "Активна" && !p.inquiryOnly ? "После оплаты бот попросит данные для зачисления: ID, @username или почту аккаунта" : "Проверяем наличие, называем точную сумму и способ оплаты"}
               </li>
               <li className="flex gap-2.5">
                 <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--color-mint-soft)] text-[10px] font-bold text-[var(--color-mint)]">3</span>
@@ -97,7 +99,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <div className="text-xs text-[var(--color-text-muted)]">Цена</div>
             <div className="mt-1 text-3xl font-bold text-[var(--color-mint)]">{formatRub(p.priceRub)}</div>
             <div className="mt-4">
-              <BuyButton productName={p.name} price={p.priceRub} fullWidth />
+              <BuyButton productName={p.name} price={p.priceRub} inquiryOnly={p.inquiryOnly} fullWidth paySku={p.status === "Активна" && !p.inquiryOnly ? shopSkuOf(p) : undefined} payUrl={payLinkFor(p.paySku)} />
             </div>
           </div>
         </aside>

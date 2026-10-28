@@ -11,7 +11,7 @@ export const metadata = {
 const groups = [
   {
     title: "AI-подписки",
-    slugs: ["chatgpt", "claude", "perplexity", "grok", "cursor", "google"],
+    slugs: ["chatgpt", "claude", "perplexity", "grok", "cursor", "google", "character-ai", "higgsfield", "tripo", "meshy"],
     text: "ChatGPT, Claude, Perplexity, Grok, Cursor, Google AI",
   },
   {
@@ -26,8 +26,8 @@ const groups = [
   },
   {
     title: "Подписки и сервисы",
-    slugs: ["netflix", "spotify", "discord", "telegram", "apple"],
-    text: "Netflix, Spotify, Discord, Telegram, подарочные карты Apple",
+    slugs: ["netflix", "discord", "telegram", "apple", "picsart", "zoom", "coursera", "busuu", "quizlet"],
+    text: "Netflix, Discord, Telegram, подарочные карты Apple",
   },
 ];
 
@@ -65,7 +65,7 @@ export default function AboutPage() {
         <p className="leading-relaxed text-[var(--color-text-muted)]">
           Выберите позицию в каталоге и напишите в Telegram. Мы уточняем наличие и способ
           выдачи, подтверждаем стоимость и оформляем оплату. Стандартный срок от оплаты
-          до выдачи — 15–30 минут. По редким позициям срок сообщается до оплаты.
+          до выдачи согласуем до оплаты. Заказы выполняются вручную.
         </p>
       </section>
 

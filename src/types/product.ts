@@ -18,6 +18,16 @@ export type ProductInput = {
   priceUsd: number;
   /** Индивидуальная наценка (0.08 = +8%). Если не задана — берётся ступень по себестоимости */
   markup?: number;
+  /**
+   * Фиксированная розница в ₽. Ставится там, где цена уже выставлена
+   * в платёжной форме (Tribute): витрина обязана показывать ровно ту же сумму.
+   * Перекрывает расчёт из priceUsd.
+   */
+  priceRubFixed?: number;
+  /** SKU позиции в реестре оплаты (assets/tribute-products.json) и ключ в payLinks.ts */
+  paySku?: string;
+  /** Оформление только после согласования, без неподключённой кнопки оплаты. */
+  inquiryOnly?: boolean;
   status: string;
   note: string;
 };
@@ -28,7 +38,7 @@ export type ProductInput = {
  * лежит в этом типе, уезжает в JS-бандл и читается через F12.
  * Конкуренту не нужно знать, почём мы закупаем.
  */
-export type Product = Omit<ProductInput, "markup"> & {
+export type Product = Omit<ProductInput, "markup" | "priceRubFixed"> & {
   id: number;
   /** Розница в рублях: себестоимость + наценка, округлённая до магазинного вида */
   priceRub: number;

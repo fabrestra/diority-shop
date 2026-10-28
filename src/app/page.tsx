@@ -38,9 +38,9 @@ export default function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-14">
         <div className="mb-8 flex items-end justify-between">
           <div>
-            <h2 className="text-2xl font-bold md:text-3xl">Популярное</h2>
+            <h2 className="text-2xl font-bold md:text-3xl">Подписки и пополнения</h2>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-              Позиции с наибольшим спросом
+              Выберите товар и уточните условия оформления
             </p>
           </div>
           <Link href="/catalog" className="text-sm font-medium text-[var(--color-mint)] hover:underline">
@@ -70,8 +70,8 @@ function Features() {
     },
     {
       Icon: Zap,
-      title: "Выдача 15–30 минут",
-      text: "Стандартный срок обработки заказа. По редким позициям срок сообщается до оплаты.",
+      title: "Понятный срок выдачи",
+      text: "Заказы выполняем вручную. Наличие, совместимость аккаунта и срок согласуем до оплаты.",
     },
     {
       Icon: ShieldCheck,

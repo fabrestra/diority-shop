@@ -49,7 +49,7 @@ export function Hero() {
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)]/70 px-3 py-1 text-xs text-[var(--color-text-muted)] backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-mint)]" />
-              {active.length} позиций в наличии
+              {active.length} позиций в каталоге
             </div>
 
             <h1 className="text-[2.4rem] font-semibold leading-[1.05] md:text-[3.4rem]">
@@ -104,7 +104,7 @@ export function Hero() {
 
             <dl className="mt-9 grid max-w-lg grid-cols-1 gap-px overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-border)] sm:grid-cols-3">
               <Fact value={`${categories.length}`} label="сервисов в каталоге" />
-              <Fact value="15–30 мин" label="обычное время выдачи" />
+              <Fact value="Вручную" label="срок согласуем до оплаты" />
               <Fact value={`от ${formatRub(cheapest)}`} label="самая дешёвая позиция" />
             </dl>
           </div>

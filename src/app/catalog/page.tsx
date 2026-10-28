@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
-import { categories, getActiveProducts } from "@/data/catalog";
+import { SECTIONS, categories, getActiveProducts } from "@/data/catalog";
+import { smartSearch } from "@/lib/search";
 import { BrandIcon } from "@/components/BrandIcon";
 import { Search, X } from "lucide-react";
 
@@ -10,16 +11,15 @@ export default function CatalogPage() {
   const all = useMemo(() => getActiveProducts(), []);
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState<string | null>(null);
+  const [section, setSection] = useState<string | null>(null);
+  const sectionCats = SECTIONS.find((x) => x.slug === section)?.cats ?? null;
 
   const filtered = useMemo(() => {
     let res = all;
+    if (sectionCats) res = res.filter((p) => sectionCats.includes(p.categorySlug));
     if (activeCat) res = res.filter((p) => p.categorySlug === activeCat);
-    if (search) {
-      const q = search.toLowerCase();
-      res = res.filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
-    }
-    return res;
-  }, [all, activeCat, search]);
+    return smartSearch(res, search, (p) => `${p.name} ${p.category} ${p.categorySlug}`);
+  }, [all, activeCat, search, sectionCats]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -48,6 +48,23 @@ export default function CatalogPage() {
         )}
       </div>
 
+      {/* Разделы */}
+      <div className="no-scrollbar mb-3 flex gap-2 overflow-x-auto pb-1">
+        {[{ slug: null as string | null, name: "Все разделы" }, ...SECTIONS].map((x) => (
+          <button
+            key={x.slug ?? "all"}
+            onClick={() => { setSection(x.slug); setActiveCat(null); }}
+            className={`whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
+              section === x.slug
+                ? "border-[var(--color-mint)] text-[var(--color-mint)]"
+                : "border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-white"
+            }`}
+          >
+            {x.name}
+          </button>
+        ))}
+      </div>
+
       {/* Фильтры по категориям */}
       <div className="no-scrollbar mb-8 flex gap-2 overflow-x-auto pb-2">
         <button
@@ -60,7 +77,7 @@ export default function CatalogPage() {
         >
           Все
         </button>
-        {categories.map((c) => (
+        {categories.filter((c) => !sectionCats || sectionCats.includes(c.slug)).map((c) => (
           <button
             key={c.slug}
             onClick={() => setActiveCat(c.slug)}

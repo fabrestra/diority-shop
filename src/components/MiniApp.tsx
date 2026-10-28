@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Script from "next/script";
 import { BrandIcon } from "@/components/BrandIcon";
-import { config, formatRub } from "@/lib/config";
+import { buyLink, config, formatRub } from "@/lib/config";
 import { TopupCalculator } from "./TopupCalculator";
+import { MiniPay } from "./MiniPay";
+import { smartSearch } from "@/lib/search";
 
 export type MiniItem = {
   slug: string;
@@ -15,12 +17,18 @@ export type MiniItem = {
   note: string;
   warranty: string;
   need: string;
+  /** SKU в реестре оплаты: открывает карточку товара в боте и счёт в Stars */
+  paySku?: string;
+  /** Проверенная ссылка Tribute (оплата картой) */
+  payUrl?: string;
 };
 
 export type MiniCat = { slug: string; name: string; count: number };
+export type MiniSection = { slug: string; name: string; cats: string[] };
 
 /** Минимальный кусок Telegram WebApp API, который нам нужен */
 type TgWebApp = {
+  initData?: string;
   ready: () => void;
   expand: () => void;
   openTelegramLink: (url: string) => void;
@@ -30,10 +38,36 @@ type TgWebApp = {
 const tg = (): TgWebApp | undefined =>
   (globalThis as unknown as { Telegram?: { WebApp?: TgWebApp } }).Telegram?.WebApp;
 
-export function MiniApp({ items, cats }: { items: MiniItem[]; cats: MiniCat[] }) {
+export function MiniApp({ items, cats, sections = [] }: { items: MiniItem[]; cats: MiniCat[]; sections?: MiniSection[] }) {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
+  const [section, setSection] = useState<string | null>(null);
   const [open, setOpen] = useState<MiniItem | null>(null);
+  const [orders, setOrders] = useState<OrderRow[] | null>(null);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+
+  // История заказов: с сервера (подпись Telegram проверяет сервер), иначе — в боте
+  const showOrders = async () => {
+    const app = tg();
+    const botLink = `https://t.me/${config.telegram.botUsername}?start=orders`;
+    if (!config.ordersApi || !app?.initData) {
+      if (app) app.openTelegramLink(botLink);
+      else window.open(botLink, "_blank", "noopener");
+      return;
+    }
+    try {
+      const r = await fetch(`${config.ordersApi}/miniapp/orders`, {
+        headers: { "X-Telegram-Init-Data": app.initData },
+      });
+      if (!r.ok) throw new Error(String(r.status));
+      const data = (await r.json()) as { orders: OrderRow[] };
+      setOrdersError(null);
+      setOrders(data.orders);
+    } catch {
+      setOrders([]);
+      setOrdersError("История сейчас недоступна — откройте /orders в боте.");
+    }
+  };
 
   // Telegram разворачивает окно на всю высоту только по явной команде
   useEffect(() => {
@@ -42,19 +76,20 @@ export function MiniApp({ items, cats }: { items: MiniItem[]; cats: MiniCat[] })
     app?.expand();
   }, []);
 
+  const sectionCats = useMemo(() => sections.find((x) => x.slug === section)?.cats ?? null, [sections, section]);
   const list = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return items.filter(
-      (i) =>
-        (!cat || i.categorySlug === cat) &&
-        (!q || i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q)),
+    const scoped = items.filter(
+      (i) => (!cat || i.categorySlug === cat) && (!sectionCats || sectionCats.includes(i.categorySlug)),
     );
-  }, [items, query, cat]);
+    return smartSearch(scoped, query, (i) => `${i.name} ${i.category} ${i.categorySlug}`);
+  }, [items, query, cat, sectionCats]);
+  const visibleCats = sectionCats ? cats.filter((c) => sectionCats.includes(c.slug)) : cats;
 
   const order = (item: MiniItem) => {
-    const text = `Здравствуйте! Заказ: ${item.name}, ${formatRub(item.priceRub)}`;
-    const url = `https://t.me/${config.telegram.adminUsername}?text=${encodeURIComponent(text)}`;
     const app = tg();
+    // Внутри Telegram цифровые товары оплачиваются только Stars: ведём в карточку товара в боте.
+    const start = item.paySku ? `item_${item.paySku}` : "catalog";
+    const url = item.paySku ? `https://t.me/${config.telegram.botUsername}?start=${start}` : buyLink(item.name, item.priceRub);
     app?.HapticFeedback?.impactOccurred("medium");
     if (app) app.openTelegramLink(url);
     else window.open(url, "_blank", "noopener");
@@ -66,6 +101,14 @@ export function MiniApp({ items, cats }: { items: MiniItem[]; cats: MiniCat[] })
 
       {/* Поиск и фильтры прилипают к верху: на телефоне это половина удобства */}
       <div className="sticky top-0 z-10 -mx-3 bg-[var(--color-bg)]/95 px-3 pb-3 pt-1 backdrop-blur">
+        <div className="mb-2 flex justify-end">
+          <button
+            onClick={showOrders}
+            className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-muted)] active:bg-[var(--color-bg-soft)]"
+          >
+            Мои заказы
+          </button>
+        </div>
         <input
           type="search"
           inputMode="search"
@@ -75,11 +118,23 @@ export function MiniApp({ items, cats }: { items: MiniItem[]; cats: MiniCat[] })
           className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-3 text-base text-white placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-mint)]/40 focus:outline-none"
         />
 
+        {sections.length > 0 && (
+          <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto">
+            <Chip active={section === null} onClick={() => { setSection(null); setCat(null); }}>
+              Все разделы
+            </Chip>
+            {sections.map((x) => (
+              <Chip key={x.slug} active={section === x.slug} onClick={() => { setSection(x.slug); setCat(null); }}>
+                {x.name}
+              </Chip>
+            ))}
+          </div>
+        )}
         <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto">
           <Chip active={cat === null} onClick={() => setCat(null)}>
-            Все {items.length}
+            Все {sectionCats ? items.filter((i) => sectionCats.includes(i.categorySlug)).length : items.length}
           </Chip>
-          {cats.map((c) => (
+          {visibleCats.map((c) => (
             <Chip key={c.slug} active={cat === c.slug} onClick={() => setCat(c.slug)}>
               <BrandIcon
                 slug={c.slug}
@@ -94,7 +149,7 @@ export function MiniApp({ items, cats }: { items: MiniItem[]; cats: MiniCat[] })
 
       {/* Пополнение произвольной суммой показываем до каталога: чаще всего
           человеку нужно конкретное число, а не ближайший пакет побольше */}
-      {query === "" && cat === null && (
+      {query.trim() === "" && cat === null && (section === null || section === "platforms") && (
         <div className="mt-3">
           <TopupCalculator compact />
         </div>
@@ -128,7 +183,10 @@ export function MiniApp({ items, cats }: { items: MiniItem[]; cats: MiniCat[] })
         </ul>
       )}
 
-      {open && <Sheet item={open} onClose={() => setOpen(null)} onOrder={() => order(open)} />}
+      {open && (
+        <Sheet item={open} onClose={() => setOpen(null)} onOrder={() => order(open)} />
+      )}
+      {orders && <OrdersSheet orders={orders} error={ordersError} onClose={() => setOrders(null)} />}
     </div>
   );
 }
@@ -201,17 +259,55 @@ function Sheet({
               {formatRub(item.priceRub)}
             </div>
           </div>
-          <button
-            onClick={onOrder}
-            className="rounded-xl bg-[var(--color-mint)] px-6 py-3 text-sm font-semibold text-black active:bg-[var(--color-mint-hover)]"
-          >
-            Оформить
-          </button>
+          {!item.paySku && (
+            <button
+              onClick={onOrder}
+              className="rounded-xl bg-[var(--color-mint)] px-6 py-3 text-sm font-semibold text-black active:bg-[var(--color-mint-hover)]"
+            >
+              Согласовать заказ
+            </button>
+          )}
         </div>
 
+        {item.paySku && <MiniPay sku={item.paySku} payUrl={item.payUrl} />}
+
         <p className="mt-3 text-center text-xs leading-relaxed text-[var(--color-text-muted)]">
-          Откроется переписка с менеджером с готовым текстом заказа
+          {item.paySku ? "После оплаты укажите данные в боте Diority. Выполнение заказа — вручную, срок согласуем до оплаты." : "Сначала согласуем совместимость, способ оформления и срок. Не переводите деньги до подтверждения продавца."}
         </p>
+      </div>
+    </div>
+  );
+}
+
+type OrderRow = { id: string | number; product: string; amount: string | number; currency: string; status: string };
+
+/** Мои заказы — только чтение; данные покупателя и коды сюда не приходят */
+function OrdersSheet({ orders, error, onClose }: { orders: OrderRow[]; error: string | null; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative max-h-[80vh] w-full overflow-y-auto rounded-t-2xl border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 pb-8">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--color-border-strong)]" />
+        <h2 className="text-base font-semibold text-white">Мои заказы</h2>
+        {error && <p className="mt-3 text-sm text-[var(--color-text-muted)]">{error}</p>}
+        {!error && orders.length === 0 && (
+          <p className="mt-3 text-sm text-[var(--color-text-muted)]">Заказов пока нет.</p>
+        )}
+        <ul className="mt-3 space-y-2">
+          {orders.map((o) => (
+            <li key={o.id} className="rounded-xl bg-[var(--color-bg)] px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="truncate text-sm text-white">{o.product}</span>
+                <span className="flex-shrink-0 text-sm font-semibold text-[var(--color-mint)]">
+                  {o.amount.toLocaleString("ru-RU")} {o.currency === "RUB" ? "₽" : o.currency}
+                </span>
+              </div>
+              <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                №{o.id} · {o.status}
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

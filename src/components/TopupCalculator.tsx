@@ -1,8 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { config } from "@/lib/config";
 import { topupServices, topupPrice } from "@/data/catalog";
 import { BrandIcon } from "./BrandIcon";
+import { payLinkFor } from "@/data/payLinks";
+import { Bitcoin, CreditCard, Send, Star } from "lucide-react";
+
+type Tg = {
+  initData?: string;
+  openTelegramLink?: (url: string) => void;
+  openLink?: (url: string) => void;
+  openInvoice?: (url: string, cb?: (status: "paid" | "cancelled" | "failed" | "pending") => void) => void;
+  HapticFeedback?: { notificationOccurred?: (s: string) => void };
+};
+const tg = (): Tg | undefined => (globalThis as unknown as { Telegram?: { WebApp?: Tg } }).Telegram?.WebApp;
+const STEAM_LOGIN = /^[A-Za-z0-9_]{3,32}$/;
+type Avail = { stars: boolean; crypto: boolean; card: boolean };
 
 /**
  * Калькулятор пополнения на произвольную сумму.
@@ -41,12 +55,39 @@ export function TopupCalculator({
   const svc = topupServices.find((s) => s.key === key)!;
   const [raw, setRaw] = useState<string>(String(svc.presets[1]));
   const [login, setLogin] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+  const checkoutGuard = useRef(false);
+  const [notice, setNotice] = useState("");
+  const [inTelegram, setInTelegram] = useState(false);
+  // Какие способы оплаты Steam сейчас включены на сервере. До ответа — ни один.
+  const [avail, setAvail] = useState<Avail>({ stars: false, crypto: false, card: false });
+  const [starsPrice, setStarsPrice] = useState<number | null>(null);
+  useEffect(() => setInTelegram(Boolean(tg()?.initData)), []);
 
   const qty = Number(raw.replace(/\s/g, "")) || 0;
-  const low = qty > 0 && qty < svc.min;
+  const minQty = key === "steam" ? Math.max(svc.min, 50) : svc.min;
+  const low = qty > 0 && qty < minQty;
   const high = qty > svc.max;
-  const ok = qty >= svc.min && qty <= svc.max;
+  const ok = qty >= minQty && qty <= svc.max;
   const { priceRub, feeRub, feePct } = topupPrice(svc, qty);
+  useEffect(() => {
+    if (key !== "steam" || !config.shopApi) return;
+    let alive = true;
+    const credit = qty >= 50 && qty <= 15000 ? qty : 500;
+    const timer = setTimeout(() => fetch(config.shopApi + "/api/steam/quote", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ credit_rub: credit }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((q) => {
+        if (alive && q) {
+          setAvail({ stars: q.stars_available === true, crypto: q.crypto_available === true, card: q.tribute_available === true });
+          setStarsPrice(credit === qty && typeof q.stars_price === "number" ? q.stars_price : null);
+        }
+      })
+      .catch(() => undefined), 350);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [key, qty]);
 
   /**
    * Для Steam единица — рубль на кошельке, поэтому комиссия считается
@@ -68,13 +109,88 @@ export function TopupCalculator({
     setLogin("");
   };
 
+  const post = async (path: string, body: object, initData?: string) => {
+    const response = await fetch(config.shopApi + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(initData ? { "X-Telegram-Init-Data": initData } : {}) },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Не удалось создать счёт. Попробуйте позже или напишите в поддержку.");
+    return data;
+  };
+
+  const steamLogin = login.trim();
+  const loginOk = key !== "steam" || STEAM_LOGIN.test(steamLogin);
+
+  /** Общая обёртка: один счёт за раз, понятная ошибка вместо молчания. */
+  const run = async (fn: () => Promise<void>) => {
+    if (checkoutGuard.current) return;
+    checkoutGuard.current = true;
+    setBusy(true);
+    setCheckoutError("");
+    setNotice("");
+    try {
+      await fn();
+    } catch (error) {
+      setCheckoutError(error instanceof TypeError ? "Не удалось связаться с магазином. Попробуйте позже или напишите в поддержку." : error instanceof Error ? error.message : "Счёт не подтверждён. Обратитесь в поддержку.");
+    } finally {
+      checkoutGuard.current = false;
+      setBusy(false);
+    }
+  };
+  const steamBody = () => ({ credit_rub: qty, expected_price_minor: priceRub * 100, login: steamLogin });
+
+  /** Steam звёздами — счёт открывается прямо в мини-приложении. */
+  const payStars = () => run(async () => {
+    const app = tg();
+    if (!app?.initData || !app.openInvoice) throw new Error("Обновите Telegram: эта версия не умеет открывать счета.");
+    const { invoice_link } = await post("/api/miniapp/steam-stars-invoice", steamBody(), app.initData);
+    app.openInvoice(invoice_link, (status) => {
+      if (status === "paid") {
+        app.HapticFeedback?.notificationOccurred?.("success");
+        setNotice(`Оплата получена. Пополним Steam «${steamLogin}» вручную, обычно в течение часа, максимум 24 часа. Статус — в @${config.telegram.botUsername}.`);
+      } else if (status === "failed") setCheckoutError("Оплата не прошла. Попробуйте ещё раз.");
+    });
+  });
+
+  /** Steam в USDT — только на сайте: правила Telegram не разрешают внешнюю крипту в мини-приложении. */
+  const payCrypto = () => run(async () => {
+    const invoice = await post("/api/steam/crypto-invoice", steamBody());
+    if (typeof invoice.pay_url !== "string" || !invoice.pay_url.startsWith("https://plisio.net/invoice/"))
+      throw new Error("Ссылка оплаты требует проверки. Обратитесь в поддержку; повторно не оплачивайте.");
+    window.location.assign(invoice.pay_url);
+  });
+
+  /** Steam картой — когда Tribute подключит оплату произвольной суммы. */
+  const payCard = () => run(async () => {
+    const invoice = await post("/api/steam/tribute-invoice", steamBody());
+    if (typeof invoice.pay_url !== "string" || !/^https:\/\/web\.tribute\.tg\/shop\/pay\/[a-f0-9-]{36}$/.test(invoice.pay_url))
+      throw new Error("Ссылка оплаты требует проверки. Обратитесь в поддержку; повторную оплату не делайте.");
+    window.location.assign(invoice.pay_url);
+  });
+
+  /** Остальные сервисы калькулятора и запасной путь — заказ через поддержку. */
   const order = () => {
     const who = login.trim() ? ` ${svc.idLabel}: ${login.trim()}.` : "";
-    const text =
-      `Здравствуйте! ${svc.title}: ${qty} ${svc.unit}. К оплате ${priceRub} ₽.${who}`;
-    const url = `https://t.me/diority_admin?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    const text = `Здравствуйте! ${svc.title}: ${qty} ${svc.unit}. К оплате ${priceRub} ₽.${who}`;
+    const url = `https://t.me/${config.telegram.adminUsername}?text=${encodeURIComponent(text)}`;
+    const app = tg();
+    if (app?.openTelegramLink) app.openTelegramLink(url);
+    else window.location.assign(url);
   };
+
+  const steamStarsHere = key === "steam" && inTelegram && avail.stars;
+  const steamCryptoHere = key === "steam" && !inTelegram && avail.crypto;
+  const steamCardHere = key === "steam" && !inTelegram && avail.card;
+  const steamStarsInBot = key === "steam" && !inTelegram && avail.stars;
+  // Фиксированные карточки Tribute (оплата картой/СБП) для отдельных сумм: steam-100 и т.д.
+  const steamFixedCard = key === "steam" && config.miniAppExternalPay ? payLinkFor(`steam-${qty}`) : undefined;
+  const anySteamPay = steamStarsHere || steamCryptoHere || steamCardHere || Boolean(steamFixedCard);
+  const ready = ok && loginOk && !busy;
+  const btnBase = "inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ";
+  const btnMain = btnBase + "bg-mint text-[#04121f] enabled:hover:brightness-110";
+  const btnAlt = btnBase + "border border-white/15 text-white enabled:hover:border-mint";
 
   return (
     <section
@@ -98,6 +214,7 @@ export function TopupCalculator({
           <button
             key={s.key}
             onClick={() => pick(s.key)}
+            disabled={busy}
             className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
               s.key === key
                 ? "border-mint bg-mint/10 text-mint"
@@ -118,6 +235,7 @@ export function TopupCalculator({
       <div className="mt-2 flex items-center gap-3 rounded-xl border border-white/10 bg-[#0F1729] px-4 py-3 focus-within:border-mint">
         <input
           inputMode="numeric"
+          disabled={busy}
           value={raw}
           onChange={(e) => setRaw(e.target.value.replace(/[^\d\s]/g, ""))}
           placeholder={svc.placeholder}
@@ -128,10 +246,11 @@ export function TopupCalculator({
 
       {/* быстрые кнопки */}
       <div className="mt-2 flex flex-wrap gap-2">
-        {svc.presets.map((p) => (
+        {(key === "steam" ? [100, 250, 500, 1000, 2000, 5000] : svc.presets).map((p) => (
           <button
             key={p}
             onClick={() => setRaw(String(p))}
+            disabled={busy}
             className="rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-300 hover:border-mint hover:text-mint"
           >
             {p.toLocaleString("ru-RU")}
@@ -139,12 +258,21 @@ export function TopupCalculator({
         ))}
       </div>
 
+      {key === "steam" && <label className="mt-4 block text-xs text-slate-400">
+        Сумма пополнения Steam
+        <input type="range" min={Math.max(svc.min, 50)} max={svc.max} step={svc.step}
+          value={Math.min(Math.max(qty, Math.max(svc.min, 50)), svc.max)}
+          onChange={(event) => setRaw(event.target.value)} disabled={busy}
+          className="mt-2 w-full accent-emerald-400" />
+      </label>}
+
       {/* логин / ник — чтобы человек сразу видел, что от него нужно */}
       <label className="mt-4 block text-xs uppercase tracking-wide text-slate-400">
         {svc.idLabel}
       </label>
       <input
         value={login}
+        disabled={busy}
         onChange={(e) => setLogin(e.target.value)}
         placeholder={svc.idPlaceholder}
         className="mt-2 w-full rounded-xl border border-white/10 bg-[#0F1729] px-4 py-3 text-base text-white outline-none placeholder:text-slate-600 focus:border-mint"
@@ -153,7 +281,7 @@ export function TopupCalculator({
       {/* подсказки по границам */}
       {low && (
         <p className="mt-3 text-sm text-amber-400">
-          Минимум — {svc.min.toLocaleString("ru-RU")} {svc.unit}.
+          Минимум — {minQty.toLocaleString("ru-RU")} {svc.unit}.
         </p>
       )}
       {high && (
@@ -197,15 +325,67 @@ export function TopupCalculator({
             </div>
           )}
         </div>
-        <button
-          onClick={order}
-          disabled={!ok}
-          className="rounded-xl bg-mint px-6 py-3 text-sm font-bold text-[#04121f] transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Оформить
-        </button>
+        {anySteamPay ? (
+          <div className="flex w-full flex-col gap-2 sm:w-auto">
+            {steamFixedCard && !steamCardHere && (
+              <button
+                onClick={() => {
+                  const app = tg();
+                  if (app?.openTelegramLink) app.openTelegramLink(steamFixedCard);
+                  else window.open(steamFixedCard, "_blank", "noopener");
+                }}
+                disabled={busy}
+                className={btnMain}
+              >
+                <CreditCard size={16} /> Оплатить картой {priceRub.toLocaleString("ru-RU")} ₽
+              </button>
+            )}
+            {steamStarsHere && (
+              <button onClick={payStars} disabled={!ready} className={steamFixedCard ? btnAlt : btnMain}>
+                <Star size={16} /> {busy ? "Создаём счёт…" : starsPrice ? `Оплатить ${starsPrice.toLocaleString("ru-RU")} ⭐` : "Оплатить звёздами"}
+              </button>
+            )}
+            {steamCardHere && (
+              <button onClick={payCard} disabled={!ready} className={btnMain}>
+                <CreditCard size={16} /> {busy ? "Создаём счёт…" : "Оплатить картой"}
+              </button>
+            )}
+            {steamCryptoHere && (
+              <button onClick={payCrypto} disabled={!ready} className={steamCardHere ? btnAlt : btnMain}>
+                <Bitcoin size={16} /> {busy ? "Создаём счёт…" : "Оплатить USDT (BEP20)"}
+              </button>
+            )}
+            {steamStarsInBot && (
+              <a href={config.telegram.miniAppUrl} target="_blank" rel="noopener noreferrer" className={btnAlt}>
+                <Star size={16} /> Звёздами в Telegram
+              </a>
+            )}
+          </div>
+        ) : (
+          <button onClick={order} disabled={!ok || busy} className={btnMain}>
+            <Send size={16} /> {busy ? "Проверяем оформление…" : "Оформить через поддержку"}
+          </button>
+        )}
       </div>
 
+      {key === "steam" && !loginOk && login.trim() !== "" && (
+        <p className="mt-3 text-sm text-amber-400">Нужен именно логин Steam — латиница, цифры и «_». Не ник и не ссылка на профиль.</p>
+      )}
+      {anySteamPay && !login.trim() && ok && (
+        <p className="mt-3 text-xs text-slate-400">Впишите логин Steam — без него счёт не создаётся.</p>
+      )}
+      {checkoutError && <p role="alert" className="mt-3 text-sm text-amber-300">{checkoutError}</p>}
+      {notice && <p className="mt-3 text-sm text-mint">{notice}</p>}
+      {steamFixedCard && (
+        <p className="mt-3 text-xs leading-relaxed text-slate-400">Оплата картой — через Tribute. Логин Steam бот @{config.telegram.botUsername} спросит сразу после оплаты.</p>
+      )}
+      {key === "steam" && anySteamPay && !avail.card && !steamFixedCard && (
+        <p className="mt-3 rounded-lg border border-amber-400/30 bg-amber-400/5 px-3 py-2 text-xs leading-relaxed text-amber-200">
+          {inTelegram
+            ? "Пополнение Steam на любую сумму сейчас оплачивается звёздами Telegram. Оплата картой скоро; криптовалютой — на сайте diority.com."
+            : "Пополнение Steam на любую сумму сейчас оплачивается в USDT или звёздами Telegram. Оплата картой подключается — скоро появится."}
+        </p>
+      )}
       <p className="mt-4 text-xs leading-relaxed text-slate-400">
         Для оформления понадобится: {svc.need}.
         {svc.note ? ` ${svc.note}` : ""}

@@ -14,6 +14,9 @@ export function ProductVisual({
   categorySlug: string;
   categoryName?: string;
 }) {
+  if (categorySlug === "suno" || categorySlug === "midjourney") {
+    return <img src={`/images/products/${categorySlug}-1m.png`} alt={categoryName ?? categorySlug} width={1448} height={1086} loading="lazy" className="aspect-[4/3] w-full rounded-2xl border border-[var(--color-border)] object-cover" />;
+  }
   const icon = brandIcons[categorySlug];
   const accent = icon?.multi ? "#FFFFFF" : (icon?.color ?? "#00E5A1");
 
